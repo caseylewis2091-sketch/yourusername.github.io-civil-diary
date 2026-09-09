@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#172033">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg">
+<title>Civil Diary</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#172033;--muted:#697386;--line:#dfe4ea;--accent:#e68a00;--danger:#c0392b;--ok:#218739}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0}.app{min-height:100vh}
+header{background:var(--ink);color:#fff;padding:14px max(16px,env(safe-area-inset-left));position:sticky;top:0;z-index:5}
+.top{max-width:1150px;margin:auto;display:flex;gap:12px;align-items:center;justify-content:space-between}.brand{font-weight:800;font-size:20px}.project-pill{font-size:12px;background:#2c3850;padding:7px 10px;border-radius:999px}
+main{max-width:1150px;margin:auto;padding:18px 16px 90px}.view{display:none}.view.active{display:block}
+h1{font-size:25px;margin:8px 0 4px}h2{font-size:19px;margin:20px 0 10px}.sub{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 2px 7px #00000008}.stat b{font-size:28px;display:block}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0}.btn{padding:10px 13px;border-radius:10px;background:var(--ink);color:#fff;font-weight:700}.btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.accent{background:var(--accent)}.btn.danger{background:var(--danger)}
+.list{display:grid;gap:10px}.item{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px}.item .meta{color:var(--muted);font-size:12px;margin-bottom:5px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.tag{display:inline-block;border-radius:999px;padding:4px 8px;background:#eef1f5;font-size:11px;font-weight:700}.open{background:#fff4d9}.done{background:#e6f6e9}.danger-text{color:var(--danger)}
+form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;display:grid;gap:12px}label{font-weight:700;font-size:13px}input,textarea,select{width:100%;padding:10px;border:1px solid #cdd4dc;border-radius:9px;background:#fff;color:var(--ink)}textarea{min-height:90px;resize:vertical}.field{display:grid;gap:6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}.photo{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}.photo img{width:100%;height:125px;object-fit:cover;display:block}.photo p{margin:8px;font-size:12px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;z-index:6;padding:7px max(5px,env(safe-area-inset-bottom))}.bottom button{background:transparent;padding:7px 12px;color:var(--muted);font-size:12px}.bottom button.active{color:var(--ink);font-weight:800}
+.empty{padding:28px;text-align:center;color:var(--muted);background:#fff;border:1px dashed var(--line);border-radius:14px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:min(700px,100%);max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px}
+.notice{background:#fff8e6;border:1px solid #f0d38a;padding:11px;border-radius:10px;color:#6d5300;font-size:13px}
+@media(max-width:650px){.cards{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}h1{font-size:22px}.cards .card{padding:11px}.stat b{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="top"><div class="brand">🏗️ Civil Diary</div><div id="projectPill" class="project-pill">All Projects</div></div></header>
+<main>
+<section id="projects" class="view active">
+<h1>Projects</h1><div class="sub">Everything is separated by project.</div>
+<div class="actions"><button class="btn accent" onclick="openProjectForm()">＋ New Project</button></div>
+<div id="projectList" class="grid"></div>
+</section>
+
+<section id="dashboard" class="view">
+<div class="row"><div><h1 id="dashTitle">Project</h1><div class="sub" id="dashSub"></div></div><button class="btn alt" onclick="show('projects')">← Projects</button></div>
+<div class="cards" style="margin-top:15px"><div class="card stat"><span>📓 Diary</span><b id="sDiary">0</b></div><div class="card stat"><span>📸 Photos</span><b id="sPhotos">0</b></div><div class="card stat"><span>✅ Open tasks</span><b id="sTasks">0</b></div></div>
+<div class="actions"><button class="btn accent" onclick="openDiaryForm()">＋ Diary</button><button class="btn" onclick="openPhotoForm()">📸 Photo</button><button class="btn" onclick="openTaskForm()">＋ Task</button></div>
+<h2>Outstanding tasks</h2><div id="dashTasks" class="list"></div>
+<h2>Recent diary</h2><div id="dashDiary" class="list"></div>
+</section>
+
+<section id="diary" class="view">
+<div class="row"><div><h1>Daily Diary</h1><div class="sub" id="sectionProject"></div></div><button class="btn accent" onclick="openDiaryForm()">＋ New entry</button></div>
+<div id="diaryList" class="list" style="margin-top:14px"></div>
+</section>
+
+<section id="photos" class="view">
+<div class="row"><div><h1>Photos & Records</h1><div class="sub" id="photoProject"></div></div><button class="btn accent" onclick="openPhotoForm()">＋ Add photos</button></div>
+<div id="photoList" class="photo-grid" style="margin-top:14px"></div>
+</section>
+
+<section id="tasks" class="view">
+<div class="row"><div><h1>Tasks / To-Do</h1><div class="sub" id="taskProject"></div></div><button class="btn accent" onclick="openTaskForm()">＋ New task</button></div>
+<div id="taskList" class="list" style="margin-top:14px"></div>
+</section>
+</main>
+<nav class="bottom"><button onclick="show('projects')" id="navProjects">🏗️<br>Projects</button><button onclick="goProject()" id="navDashboard">📊<br>Dashboard</button><button onclick="goProjectSection('diary')" id="navDiary">📓<br>Diary</button><button onclick="goProjectSection('photos')" id="navPhotos">📸<br>Photos</button><button onclick="goProjectSection('tasks')" id="navTasks">✅<br>Tasks</button></nav>
+</div>
+
+<div id="modal" class="modal"><div class="sheet"><div class="row"><h2 id="modalTitle" style="margin-top:0">New</h2><button class="btn alt" onclick="closeModal()">Close</button></div><div id="modalBody"></div></div></div>
+
+<script>
+const KEY='civilDiaryV2';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"projects":[],"diaries":[],"photos":[],"tasks":[]}');
+let currentProject=null;
+const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const proj=()=>db.projects.find(p=>p.id===currentProject);
+function show(id){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');render();window.scrollTo(0,0)}
+function goProject(){if(currentProject)show('dashboard');else show('projects')}
+function goProjectSection(s){if(currentProject)show(s);else show('projects')}
+function openModal(title,body){modalTitle.textContent=title;modalBody.innerHTML=body;modal.classList.add('show')}
+function closeModal(){modal.classList.remove('show')}
+function projectOptions(){return db.projects.map(p=>`<option value="${p.id}" ${p.id===currentProject?'selected':''}>${esc(p.name)}</option>`).join('')}
+function openProjectForm(editId=null){
+ let p=db.projects.find(x=>x.id===editId)||{};
+ openModal(editId?'Edit Project':'New Project',`<form onsubmit="saveProject(event,'${editId||''}')">
+ <div class="field"><label>Project name *</label><input id="pname" required value="${esc(p.name||'')}" placeholder="e.g. A123 – Station Road"></div>
+ <div class="two"><div class="field"><label>Client</label><input id="pclient" value="${esc(p.client||'')}"></div><div class="field"><label>Main contractor</label><input id="pcontractor" value="${esc(p.contractor||'')}"></div></div>
+ <div class="field"><label>Project reference</label><input id="pref" value="${esc(p.ref||'')}" placeholder="e.g. A123"></div>
+ <button class="btn accent">Save project</button></form>`)
+}
+function saveProject(e,id){e.preventDefault();let p={id:id||uid(),name:pname.value.trim(),client:pclient.value.trim(),contractor:pcontractor.value.trim(),ref:pref.value.trim()};if(id)db.projects=db.projects.map(x=>x.id===id?p:x);else{db.projects.push(p);currentProject=p.id}save();closeModal();show(id?'projects':'dashboard')}
+function selectProject(id){currentProject=id;show('dashboard')}
+function openDiaryForm(){
+ if(!currentProject)return alert('Create or open a project first.');
+ openModal('New Diary Entry',`<form onsubmit="saveDiary(event)">
+ <div class="two"><div class="field"><label>Date</label><input id="dDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Area / location</label><input id="dArea" placeholder="e.g. MH07–MH09"></div></div>
+ <div class="field"><label>Weather</label><input id="dWeather" placeholder="Dry, wet, windy..."></div>
+ <div class="field"><label>Work completed</label><textarea id="dWork" placeholder="What was completed today?"></textarea></div>
+ <div class="field"><label>Setting out / survey</label><textarea id="dSurvey" placeholder="Points set out, levels, checks, as-builts..."></textarea></div>
+ <div class="field"><label>Issues / problems</label><textarea id="dIssues"></textarea></div>
+ <div class="field"><label>Instructions / communication</label><textarea id="dComm"></textarea></div>
+ <div class="field"><label>Tomorrow / actions</label><textarea id="dTomorrow"></textarea></div>
+ <button class="btn accent">Save diary entry</button></form>`)
+}
+function saveDiary(e){e.preventDefault();db.diaries.unshift({id:uid(),projectId:currentProject,date:dDate.value,area:dArea.value,weather:dWeather.value,work:dWork.value,survey:dSurvey.value,issues:dIssues.value,comm:dComm.value,tomorrow:dTomorrow.value,created:Date.now()});save();closeModal();show('diary')}
+function openTaskForm(){
+ if(!currentProject)return alert('Create or open a project first.');
+ openModal('New Task',`<form onsubmit="saveTask(event)">
+ <div class="field"><label>Task *</label><input id="tName" required placeholder="e.g. Check MH07 invert against latest drawing"></div>
+ <div class="two"><div class="field"><label>Due date</label><input id="tDue" type="date"></div><div class="field"><label>Priority</label><select id="tPriority"><option>Normal</option><option>High</option><option>Urgent</option><option>Low</option></select></div></div>
+ <div class="field"><label>Notes</label><textarea id="tNotes"></textarea></div><button class="btn accent">Save task</button></form>`)
+}
+function saveTask(e){e.preventDefault();db.tasks.unshift({id:uid(),projectId:currentProject,name:tName.value,due:tDue.value,priority:tPriority.value,notes:tNotes.value,status:'Open',created:Date.now()});save();closeModal();show('tasks')}
+function toggleTask(id){let t=db.tasks.find(x=>x.id===id);if(t)t.status=t.status==='Complete'?'Open':'Complete';save();render()}
+function deleteTask(id){if(confirm('Delete this task?')){db.tasks=db.tasks.filter(x=>x.id!==id);save();render()}}
+function openPhotoForm(){
+ if(!currentProject)return alert('Create or open a project first.');
+ openModal('Add Site Photos',`<form onsubmit="savePhotos(event)">
+ <div class="field"><label>Photos</label><input id="photoFiles" type="file" accept="image/*" multiple required></div>
+ <div class="two"><div class="field"><label>Area / location</label><input id="photoArea"></div><div class="field"><label>Drawing reference</label><input id="photoDrawing" placeholder="Optional"></div></div>
+ <div class="field"><label>Description</label><textarea id="photoDesc" placeholder="What does the photo show?"></textarea></div>
+ <div class="notice">Photos are stored in this browser in this prototype. The cloud version will use proper online storage.</div>
+ <button class="btn accent">Save photos</button></form>`)
+}
+async function savePhotos(e){e.preventDefault();let files=[...photoFiles.files];for(const f of files){let data=await new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});db.photos.unshift({id:uid(),projectId:currentProject,data,name:f.name,area:photoArea.value,drawing:photoDrawing.value,desc:photoDesc.value,date:new Date().toISOString().slice(0,10)})}save();closeModal();show('photos')}
+function removePhoto(id){if(confirm('Delete this photo?')){db.photos=db.photos.filter(x=>x.id!==id);save();render()}}
+function render(){
+ projectPill.textContent=proj()?.name||'All Projects';
+ renderProjects();
+ if(!currentProject){return}
+ let p=proj();dashTitle.textContent=p.name;dashSub.textContent=[p.ref,p.client,p.contractor].filter(Boolean).join(' • ');
+ sectionProject.textContent=p.name;photoProject.textContent=p.name;taskProject.textContent=p.name;
+ let ds=db.diaries.filter(x=>x.projectId===currentProject), ps=db.photos.filter(x=>x.projectId===currentProject), ts=db.tasks.filter(x=>x.projectId===currentProject);
+ sDiary.textContent=ds.length;sPhotos.textContent=ps.length;sTasks.textContent=ts.filter(x=>x.status!=='Complete').length;
+ dashTasks.innerHTML=taskHTML(ts.slice(0,5));dashDiary.innerHTML=diaryHTML(ds.slice(0,4));
+ diaryList.innerHTML=diaryHTML(ds);photoList.innerHTML=photoHTML(ps);taskList.innerHTML=taskHTML(ts);
+}
+function renderProjects(){
+ projectList.innerHTML=db.projects.length?db.projects.map(p=>{let d=db.diaries.filter(x=>x.projectId===p.id).length,ph=db.photos.filter(x=>x.projectId===p.id).length,t=db.tasks.filter(x=>x.projectId===p.id&&x.status!=='Complete').length;return `<div class="card"><h2 style="margin:0 0 5px">${esc(p.name)}</h2><div class="sub">${esc([p.ref,p.client,p.contractor].filter(Boolean).join(' • '))}</div><p>📓 ${d} &nbsp; 📸 ${ph} &nbsp; ✅ ${t} open</p><div class="actions"><button class="btn" onclick="selectProject('${p.id}')">Open project</button><button class="btn alt" onclick="openProjectForm('${p.id}')">Edit</button></div></div>`}).join(''):`<div class="empty">No projects yet.<br>Create your first project and all your records will stay grouped under it.</div>`
+}
+function diaryHTML(a){return a.length?a.map(d=>`<div class="item"><div class="meta">${esc(d.date)} ${d.area?'• '+esc(d.area):''} ${d.weather?'• '+esc(d.weather):''}</div><b>${esc(d.work||'Diary entry')}</b>${d.survey?`<p><b>Setting out / survey:</b> ${esc(d.survey)}</p>`:''}${d.issues?`<p class="danger-text"><b>Issue:</b> ${esc(d.issues)}</p>`:''}${d.comm?`<p><b>Communication:</b> ${esc(d.comm)}</p>`:''}${d.tomorrow?`<p><b>Tomorrow:</b> ${esc(d.tomorrow)}</p>`:''}</div>`).join(''):`<div class="empty">No diary entries yet.</div>`}
+function taskHTML(a){return a.length?a.map(t=>`<div class="item"><div class="row"><label style="display:flex;gap:9px;align-items:flex-start"><input type="checkbox" ${t.status==='Complete'?'checked':''} onchange="toggleTask('${t.id}')"><span><b style="${t.status==='Complete'?'text-decoration:line-through':''}">${esc(t.name)}</b><br><span class="tag ${t.status==='Complete'?'done':'open'}">${esc(t.status)}</span> <span class="tag">${esc(t.priority)}</span>${t.due?` <span class="tag">Due ${esc(t.due)}</span>`:''}</span></label><button class="btn danger" onclick="deleteTask('${t.id}')">Delete</button></div>${t.notes?`<p>${esc(t.notes)}</p>`:''}</div>`).join(''):`<div class="empty">No tasks yet.</div>`}
+function photoHTML(a){return a.length?a.map(p=>`<div class="photo"><img src="${p.data}" alt=""><p><b>${esc(p.area||'Site photo')}</b><br>${esc(p.desc||'')}${p.drawing?`<br>Drawing: ${esc(p.drawing)}`:''}<br><span class="sub">${esc(p.date)}</span><br><button class="btn danger" style="margin-top:7px;padding:6px 8px" onclick="removePhoto('${p.id}')">Delete</button></p></div>`).join(''):`<div class="empty" style="grid-column:1/-1">No photos yet.</div>`}
+render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
